@@ -43,18 +43,24 @@ class MainActivity : AppCompatActivity() {
         binding.SavedDetails.setOnClickListener {
             startActivity(Intent(this,SavedDetailsLIst::class.java))
         }
+        // Inside onCreate or onViewCreated
         val name = intent.getStringExtra("name")
         val email = intent.getStringExtra("email")
         val phone = intent.getStringExtra("phone")
         val web = intent.getStringExtra("web")
-        val company= intent.getStringExtra("company")
+        val company = intent.getStringExtra("company")
         var notkey = intent.getStringExtra("notkey")
-        if(name!="" && email!="" && phone!="" && web != "" && company !="" && notkey!= "")
-        binding.name.setText(name)
-        binding.email.setText(email)
-        binding.phone.setText(phone)
-        binding.website.setText(web)
-        binding.companyName.setText(company)
+
+        if (!name.isNullOrEmpty() && !email.isNullOrEmpty() && !phone.isNullOrEmpty()
+            && !web.isNullOrEmpty() && !company.isNullOrEmpty() && !notkey.isNullOrEmpty()) {
+
+            binding.name.setText(name)
+            binding.email.setText(email)
+            binding.phone.setText(phone)
+            binding.website.setText(web)
+            binding.companyName.setText(company)
+        }
+
         binding.capturebut.setOnClickListener {
             ImagePicker.with(this)
                 .crop()	    			//Crop image(Optional), Check Customization for more option
@@ -65,28 +71,32 @@ class MainActivity : AppCompatActivity() {
         binding.save.setOnClickListener {
             val email = binding.email.text.toString()
             val name = binding.name.text.toString()
-            val companyname =binding.companyName.text.toString()
+            val companyname = binding.companyName.text.toString()
             val web = binding.website.text.toString()
             val phone = binding.phone.text.toString()
-            if(email.isNotEmpty() && name.isNotEmpty() && phone.isNotEmpty() ){
-                if(notkey ==""){
-                    notkey =   ref.child("user").push().key
-                }
-                val data = SaveDetailInfo(name,email,companyname,phone,web, notkey.toString())
-                ref.child("user").child(notkey.toString()).setValue(data)
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener {
-                        error->
-                        Toast.makeText(this, "Failed due to ${error.message}", Toast.LENGTH_SHORT).show()
-                    }
-            } else
-            {
-                Toast.makeText(this, "Email, phone and name are required field.", Toast.LENGTH_SHORT).show()
-            }
 
+            if (email.isNotEmpty() && name.isNotEmpty() && phone.isNotEmpty()) {
+                if (notkey.isNullOrEmpty()) {
+                    notkey = ref.child("user").push().key
+                }
+
+                notkey?.let { key ->
+                    val data = SaveDetailInfo(name, email, companyname, phone, web, key)
+                    ref.child("user").child(key).setValue(data)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { error ->
+                            Toast.makeText(this, "Failed due to ${error.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } ?: run {
+                    Toast.makeText(this, "Error creating key", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Email, phone and name are required fields.", Toast.LENGTH_SHORT).show()
+            }
         }
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
